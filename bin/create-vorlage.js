@@ -26,11 +26,15 @@ const templatePath = path.join(__dirname, '..');
 const filesToCopy = [
   'app',
   'public',
+  'lib',
+  'prisma',
   'package.json',
   'tsconfig.json',
   'next.config.ts',
   'tailwind.config.ts',
   'postcss.config.mjs',
+  'prisma.config.ts',
+  'eslint.config.mjs',
   '.gitignore',
   'README.md',
   '.env.example'
@@ -60,6 +64,14 @@ filesToCopy.forEach(file => {
   }
 });
 
+// Copy .env.example to .env
+const envExamplePath = path.join(projectPath, '.env.example');
+const envPath = path.join(projectPath, '.env');
+if (fs.existsSync(envExamplePath)) {
+  fs.copyFileSync(envExamplePath, envPath);
+  console.log('✅ .env Datei erstellt');
+}
+
 // Update package.json
 const packageJsonPath = path.join(projectPath, 'package.json');
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
@@ -80,7 +92,17 @@ console.log(`
 
 📁 Nächste Schritte:
   cd ${projectName}
+  
+📝 Konfiguriere deine MongoDB Verbindung:
+  - Öffne .env
+  - Trage deine DATABASE_URL ein
+  
+🚀 Starte das Projekt:
   npm run dev
-
+  
+🗄️ Prisma Commands:
+  npm run prisma:studio  # Öffne Prisma Studio
+  npm run prisma:generate # Generiere Prisma Client
+  
 🎉 Viel Erfolg mit deinem Projekt!
 `);
