@@ -1,21 +1,54 @@
 {
-  "name": "create-my-next-app-jonas",
-  "version": "1.0.3",
-  "description": "Generiert ein Next.js Projekt mit App Router und Auth",
-  "type": "module",
-  "bin": {
-    "create-my-next-app-jonas": "./index.js"
+  "name": "@jonasppxx/vorlage",
+  "version": "1.0.0",
+  "description": "Ein vollständiges Next.js Starter-Template",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "postinstall": "npm install"
   },
-  "files": [
-    "index.js",
-    "template"
-  ],
   "keywords": [
     "nextjs",
+    "template",
     "starter",
-    "app-router",
-    "cli"
+    "react",
+    "typescript",
+    "tailwind"
   ],
+  "author": "Jonasppxx",
   "license": "MIT",
-  "author": "Jonas"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Jonasppxx/vorlage.git"
+  },
+  "files": [
+    "app",
+    "public",
+    "bin",
+    "*.config.*",
+    "*.json",
+    ".gitignore",
+    "README.md"
+  ],
+  "bin": {
+    "create-vorlage": "./bin/create-vorlage.js"
+  },
+  "dependencies": {
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "next": "16.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@tailwindcss/postcss": "^4",
+    "tailwindcss": "^4",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.1"
+  }
 }
