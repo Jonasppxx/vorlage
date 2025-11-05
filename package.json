@@ -27,12 +27,9 @@
     "url": "git+https://github.com/Jonasppxx/vorlage.git"
   },
   "files": [
-    "app",
+    "src",
     "public",
     "bin",
-    "lib",
-    "src",
-    "prisma",
     "*.config.*",
     "*.json",
     ".gitignore",

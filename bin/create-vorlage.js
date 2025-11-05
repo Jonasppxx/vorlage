@@ -24,11 +24,8 @@ console.log('📦 Kopiere Template-Dateien...');
 // Kopiere alle Template-Dateien
 const templatePath = path.join(__dirname, '..');
 const filesToCopy = [
-  'app',
-  'public',
-  'lib',
   'src',
-  'prisma',
+  'public',
   'package.json',
   'tsconfig.json',
   'next.config.ts',
