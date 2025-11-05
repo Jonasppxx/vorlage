@@ -16,7 +16,7 @@ Ein vollständiges Next.js Starter-Template mit TypeScript, Tailwind CSS und ESL
 ### Option 1: Mit npx (Empfohlen)
 
 ```bash
-npx @jonasppxx/vorlage mein-projekt
+npx @jonastest/vorlage mein-projekt
 cd mein-projekt
 npm run dev
 ```
@@ -24,7 +24,7 @@ npm run dev
 ### Option 2: Mit npm install
 
 ```bash
-npm install -g @jonasppxx/vorlage
+npm install -g @jonastest/vorlage
 create-vorlage mein-projekt
 cd mein-projekt
 npm run dev
