@@ -1,16 +1,13 @@
 {
-  "name": "create-my-next-app",
-  "version": "1.0.1",
-  "description": "Mein eigenes Next.js Starter-Tool",
+  "name": "create-my-next-app-jonas",  
+  "version": "1.0.0",
+  "description": "Generiert ein Next.js Projekt mit App Router und Auth",
   "type": "module",
   "bin": {
-    "jonas-next-app": "./index.js"
+    "create-my-next-app-jonas": "./index.js"
   },
-  "keywords": [
-    "nextjs",
-    "starter",
-    "template",
-    "create"
-  ],
-  "license": "MIT"
+  "files": ["index.js", "template"],
+  "keywords": ["nextjs", "starter", "app-router", "cli"],
+  "license": "MIT",
+  "author": "Jonas"
 }
