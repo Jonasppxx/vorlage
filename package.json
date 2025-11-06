@@ -1,6 +1,6 @@
 {
   "name": "@jonastest/vorlage",
-  "version": "1.0.22",
+  "version": "1.0.23",
   "description": "Ein vollständiges Next.js Starter-Template",
   "main": "index.js",
   "scripts": {
