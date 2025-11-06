@@ -1,4 +1,7 @@
-#!/usr/bin/env node
+const fs = require('fs');
+const path = require('path');
+
+const content = `#!/usr/bin/env node
 
 const { execSync } = require('child_process');
 const fs = require('fs');
@@ -183,3 +186,8 @@ main().catch(error => {
   console.error('Fehler: ' + error.message);
   process.exit(1);
 });
+`;
+
+// Write without BOM
+fs.writeFileSync(path.join(__dirname, 'index.js'), content, { encoding: 'utf8' });
+console.log('OK: index.js regenerated');
