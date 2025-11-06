@@ -1,4 +1,6 @@
-﻿#!/usr/bin/env node
+﻿// shebang commented out to avoid "Invalid or unexpected token" when running `node index.js` on Windows
+// #!/usr/bin/env node
+'use strict';
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
