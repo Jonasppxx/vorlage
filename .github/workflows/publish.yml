@@ -57,8 +57,12 @@ jobs:
           echo "Current version: $CURRENT_VERSION"
           echo "Published version: $PUBLISHED_VERSION"
           
-          # Prüfe ob es Code-Änderungen gibt (nicht nur Docs)
-          if git diff --name-only HEAD~1 HEAD | grep -vE '^(README|.*\.md|\.github)' | grep -q .; then
+          # Handle case where HEAD~1 doesn't exist (initial commit or rebase)
+          if ! git rev-parse HEAD~1 >/dev/null 2>&1; then
+            echo "Initial commit or no previous commit - will publish"
+            echo "should_bump=false" >> $GITHUB_OUTPUT
+            echo "should_publish=true" >> $GITHUB_OUTPUT
+          elif git diff --name-only HEAD~1 HEAD | grep -vE '^(README|.*\.md|\.github)' | grep -q .; then
             if [ "$CURRENT_VERSION" == "$PUBLISHED_VERSION" ]; then
               echo "Code changed but version unchanged - will auto-bump"
               echo "should_bump=true" >> $GITHUB_OUTPUT
