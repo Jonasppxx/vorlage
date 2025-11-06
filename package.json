@@ -38,7 +38,7 @@
   ],
   "bin": {
     "create-vorlage": "index.js",
-    "@jonastest/vorlage": "index.js"
+    "vorlage": "index.js"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",
