@@ -1,0 +1,2 @@
+# Ensure index.js always uses LF line endings
+index.js text eol=lf

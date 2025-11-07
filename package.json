@@ -33,6 +33,7 @@
     "*.config.*",
     "*.json",
     ".gitignore",
+    ".gitattributes",
     "README.md",
     ".env.example"
   ],
