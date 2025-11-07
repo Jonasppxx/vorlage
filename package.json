@@ -35,7 +35,8 @@
     ".gitignore",
     ".gitattributes",
     "README.md",
-    ".env.example"
+    ".env.example",
+    ".env"
   ],
   "bin": {
     "create-nexal": "./index.js",
