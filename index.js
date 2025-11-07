@@ -10,8 +10,8 @@ const projectName = args[0];
 
 if (!projectName) {
   console.log('Next.js Template mit Prisma & Better-Auth');
-  console.log('Usage: npx @jonastest/vorlage <project-name>');
-  console.log('Example: npx @jonastest/vorlage my-app');
+  console.log('Usage: npx nexal <project-name>');
+  console.log('Example: npx nexal my-app');
   process.exit(0);
 }
 

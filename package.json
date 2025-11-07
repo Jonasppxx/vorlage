@@ -1,6 +1,11 @@
 {
+<<<<<<< HEAD
   "name": "@jonastest/vorlage",
   "version": "1.0.28",
+=======
+  "name": "nexal",
+  "version": "1.0.27",
+>>>>>>> 47a2fe0 (Deine Nachricht)
   "description": "Ein vollständiges Next.js Starter-Template",
   "main": "index.js",
   "scripts": {
@@ -38,8 +43,8 @@
     ".env.example"
   ],
   "bin": {
-    "create-vorlage": "./index.js",
-    "vorlage": "./index.js"
+    "create-nexal": "./index.js",
+    "nexal": "./index.js"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",
