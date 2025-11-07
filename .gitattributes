@@ -1,2 +1,5 @@
-# Ensure index.js always uses LF line endings
-index.js text eol=lf
+# Ensure index.js always uses LF line endings and UTF-8 encoding without BOM
+index.js text eol=lf working-tree-encoding=UTF-8
+
+# Normalize other JS files to LF
+*.js text eol=lf
