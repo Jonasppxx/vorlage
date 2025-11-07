@@ -5,15 +5,9 @@ const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
 
-const args = process.argv.slice(2);
-const projectName = args[0];
-
-if (!projectName) {
-  console.log('Next.js Template mit Prisma & Better-Auth');
-  console.log('Usage: npx nexal <project-name>');
-  console.log('Example: npx nexal my-app');
-  process.exit(0);
-}
+// allow using current directory when no argument provided
+const projectName = process.argv[2] || ".";
+const targetDir = path.resolve(process.cwd(), projectName);
 
 function askQuestion(query) {
   const rl = readline.createInterface({
@@ -45,10 +39,11 @@ async function main() {
   console.log('Ausgewaehlt: ' + dbType);
   console.log('');
 
-  const projectPath = path.join(process.cwd(), projectName);
-
-  if (fs.existsSync(projectPath)) {
-    console.error('Fehler: Ordner ' + projectName + ' existiert bereits!');
+  const projectPath = targetDir;
+  
+  // only block if user requested a named directory that already exists
+  if (projectName !== "." && fs.existsSync(projectPath)) {
+    console.error(`Fehler: Der Ordner "${projectName}" existiert bereits!`);
     process.exit(1);
   }
 
