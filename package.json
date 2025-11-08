@@ -1,10 +1,6 @@
 {
   "name": "nexal",
-<<<<<<< HEAD
   "version": "1.0.37",
-=======
-  "version": "1.0.31",
->>>>>>> 69ad851 (Deine Nachricht)
   "description": "Ein vollständiges Next.js Starter-Template",
   "main": "index.js",
   "scripts": {
@@ -17,7 +13,9 @@
     "prisma:studio": "prisma studio --schema src/prisma/schema.prisma",
     "init:admin": "node scripts/init-admin.js",
     "setup:db": "node scripts/setup-database.js",
-    "validate:db": "node scripts/validate-db-config.js"
+    "validate:db": "node scripts/validate-db-config.js",
+    "check:prisma": "node -e \"const p=require('./package.json'); const a=(p.dependencies&&p.dependencies['@prisma/client'])||''; const b=(p.devDependencies&&p.devDependencies.prisma)||''; if(a!==b){console.warn('WARN: prisma and @prisma/client versions differ:', b, a); process.exit(1);} else {console.log('OK: Prisma versions match:', a);}}\"",
+    "postinstall": "npm run check:prisma"
   },
   "prisma": {
     "schema": "src/prisma/schema.prisma"
@@ -53,7 +51,7 @@
     "nexal": "./index.js"
   },
   "dependencies": {
-    "@prisma/client": "^6.19.0",
+    "@prisma/client": "6.19.0",
     "bcryptjs": "^2.4.3",
     "better-auth": "^1.3.34",
     "dotenv": "^17.2.3",
@@ -62,13 +60,13 @@
     "react-dom": "19.2.0"
   },
   "devDependencies": {
+    "prisma": "6.19.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.0.1",
-    "prisma": "^6.19.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
