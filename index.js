@@ -68,6 +68,7 @@ async function main() {
       'README.md',
       'DATABASE_SETUP.md',
       'DATABASE_CONFIG.md',
+      'ADMIN_SETUP.md',
     ];
 
     function copyRecursive(src, dest) {
