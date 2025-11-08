@@ -4,12 +4,15 @@
   "description": "Ein vollständiges Next.js Starter-Template",
   "main": "index.js",
   "scripts": {
-    "dev": "next dev",
+    "dev": "npm run prisma:prepare && next dev",
+    "prisma:prepare": "prisma generate && prisma db push",
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "prisma:generate": "prisma generate",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "init:admin": "node scripts/init-admin.js",
+    "setup:db": "node scripts/setup-database.js"
   },
   "keywords": [
     "nextjs",

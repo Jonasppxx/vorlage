@@ -55,6 +55,7 @@ async function main() {
     const filesToCopy = [
       'src',
       'public',
+      'scripts',
       '.env.example',
       'package.json',
       'tsconfig.json',
@@ -65,6 +66,7 @@ async function main() {
       'eslint.config.mjs',
       '.gitignore',
       'README.md',
+      'DATABASE_SETUP.md',
     ];
 
     function copyRecursive(src, dest) {
@@ -116,30 +118,33 @@ async function main() {
 
     console.log('  Kopiere datenbankspezifische Dateien...');
     
-    if (usePostgres) {
-      const pgSchemaSrc = path.join(templatePath, 'src/prisma/schema.postgresql.prisma');
-      const pgSchemaDest = path.join(projectPath, 'src/prisma/schema.prisma');
-      const pgAuthSrc = path.join(templatePath, 'src/lib/auth.postgresql.ts');
-      const pgAuthDest = path.join(projectPath, 'src/lib/auth.ts');
+    // Kopiere das passende Schema basierend auf der Auswahl
+    const schemaTemplatePath = path.join(templatePath, 'prisma');
+    const schemaSrc = usePostgres 
+      ? path.join(schemaTemplatePath, 'schema.postgresql.prisma')
+      : path.join(schemaTemplatePath, 'schema.mongodb.prisma');
+    const schemaDest = path.join(projectPath, 'prisma', 'schema.prisma');
 
-      // Kopiere nur schema + auth für PostgreSQL. Keine .env.postgresql mehr.
-      if (fs.existsSync(pgSchemaSrc) && fs.existsSync(pgAuthSrc)) {
-        fs.copyFileSync(pgSchemaSrc, pgSchemaDest);
-        fs.copyFileSync(pgAuthSrc, pgAuthDest);
-        console.log('  OK: PostgreSQL Dateien kopiert');
-      }
-    } else {
-      const mongoSchemaSrc = path.join(templatePath, 'src/prisma/schema.mongodb.prisma');
-      const mongoSchemaDest = path.join(projectPath, 'src/prisma/schema.prisma');
-      const mongoAuthSrc = path.join(templatePath, 'src/lib/auth.mongodb.ts');
-      const mongoAuthDest = path.join(projectPath, 'src/lib/auth.ts');
+    if (fs.existsSync(schemaSrc)) {
+      fs.mkdirSync(path.join(projectPath, 'prisma'), { recursive: true });
+      fs.copyFileSync(schemaSrc, schemaDest);
+      console.log('  OK: ' + (usePostgres ? 'PostgreSQL' : 'MongoDB') + ' Schema kopiert');
+    }
 
-      // Kopiere nur schema + auth für MongoDB. Keine .env.mongodb mehr.
-      if (fs.existsSync(mongoSchemaSrc) && fs.existsSync(mongoAuthSrc)) {
-        fs.copyFileSync(mongoSchemaSrc, mongoSchemaDest);
-        fs.copyFileSync(mongoAuthSrc, mongoAuthDest);
-        console.log('  OK: MongoDB Dateien kopiert');
-      }
+    // Aktualisiere next.config.ts mit dem ausgewählten Provider
+    const nextConfigPath = path.join(projectPath, 'next.config.ts');
+    if (fs.existsSync(nextConfigPath)) {
+      let nextConfigContent = fs.readFileSync(nextConfigPath, 'utf-8');
+      const providerValue = usePostgres ? 'postgresql' : 'mongodb';
+      
+      // Ersetze die DATABASE_PROVIDER Zeile
+      nextConfigContent = nextConfigContent.replace(
+        /export const DATABASE_PROVIDER: DatabaseProvider = ["'](?:mongodb|postgresql)["'];/,
+        `export const DATABASE_PROVIDER: DatabaseProvider = "${providerValue}";`
+      );
+      
+      fs.writeFileSync(nextConfigPath, nextConfigContent);
+      console.log('  OK: next.config.ts aktualisiert mit DATABASE_PROVIDER=' + providerValue);
     }
 
     const packageJsonPath = path.join(projectPath, 'package.json');
