@@ -1,11 +1,10 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 'use strict';
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
 
-// allow using current directory when no argument provided
 const projectName = process.argv[2] || ".";
 const targetDir = path.resolve(process.cwd(), projectName);
 
@@ -26,22 +25,8 @@ async function main() {
   console.log('Erstelle neues Projekt: ' + projectName);
   console.log('');
 
-  console.log('Waehle deine Datenbank:');
-  console.log('  1) MongoDB (mit Replica Set - empfohlen mit Atlas)');
-  console.log('  2) PostgreSQL (empfohlen fuer Production)');
-  console.log('');
-  
-  const dbChoice = await askQuestion('Deine Wahl (1 oder 2): ');
-  const usePostgres = dbChoice.trim() === '2';
-  
-  const dbType = usePostgres ? 'PostgreSQL' : 'MongoDB';
-  console.log('');
-  console.log('Ausgewaehlt: ' + dbType);
-  console.log('');
-
   const projectPath = targetDir;
   
-  // only block if user requested a named directory that already exists
   if (projectName !== "." && fs.existsSync(projectPath)) {
     console.error(`Fehler: Der Ordner "${projectName}" existiert bereits!`);
     process.exit(1);
@@ -77,10 +62,8 @@ async function main() {
           fs.mkdirSync(dest, { recursive: true });
           fs.readdirSync(src).forEach(file => {
             if (
-              file === 'auth.postgresql.ts' || 
-              file === 'auth.mongodb.ts' ||
-              file === 'schema.postgresql.prisma' ||
-              file === 'schema.mongodb.prisma'
+              file === 'auth.ts' ||
+              file === 'schema.prisma'
             ) {
               return;
             }
@@ -118,35 +101,16 @@ async function main() {
       }
     });
 
-    console.log('  Kopiere datenbankspezifische Dateien...');
+    console.log('  Kopiere MongoDB Schema...');
     
-    // Kopiere das passende Schema basierend auf der Auswahl
     const schemaTemplatePath = path.join(templatePath, 'prisma');
-    const schemaSrc = usePostgres 
-      ? path.join(schemaTemplatePath, 'schema.postgresql.prisma')
-      : path.join(schemaTemplatePath, 'schema.mongodb.prisma');
+    const schemaSrc = path.join(schemaTemplatePath, 'schema.prisma');
     const schemaDest = path.join(projectPath, 'prisma', 'schema.prisma');
 
     if (fs.existsSync(schemaSrc)) {
       fs.mkdirSync(path.join(projectPath, 'prisma'), { recursive: true });
       fs.copyFileSync(schemaSrc, schemaDest);
-      console.log('  OK: ' + (usePostgres ? 'PostgreSQL' : 'MongoDB') + ' Schema kopiert');
-    }
-
-    // Aktualisiere next.config.ts mit dem ausgewählten Providers
-    const nextConfigPath = path.join(projectPath, 'next.config.ts');
-    if (fs.existsSync(nextConfigPath)) {
-      let nextConfigContent = fs.readFileSync(nextConfigPath, 'utf-8');
-      const providerValue = usePostgres ? 'postgresql' : 'mongodb';
-      
-      // Ersetze die DATABASE_PROVIDER Zeile
-      nextConfigContent = nextConfigContent.replace(
-        /export const DATABASE_PROVIDER: DatabaseProvider = ["'](?:mongodb|postgresql)["'];/,
-        `export const DATABASE_PROVIDER: DatabaseProvider = "${providerValue}";`
-      );
-      
-      fs.writeFileSync(nextConfigPath, nextConfigContent);
-      console.log('  OK: next.config.ts aktualisiert mit DATABASE_PROVIDER=' + providerValue);
+      console.log('  OK: MongoDB Schema kopiert');
     }
 
     const packageJsonPath = path.join(projectPath, 'package.json');

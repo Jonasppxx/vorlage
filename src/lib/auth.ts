@@ -1,11 +1,10 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./prisma/prisma";
-import { DATABASE_PROVIDER } from "../../next.config";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
-    provider: DATABASE_PROVIDER,
+    provider: "mongodb",
   }),
   emailAndPassword: {
     enabled: true,
