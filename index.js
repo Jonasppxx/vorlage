@@ -70,8 +70,8 @@ function copyTemplates(templatePath, projectPath) {
     'ADMIN_SETUP.md',
   ];
 
-  // Beim rekursiven Kopieren bestimmte Dateien/Varianten überspringen, damit wir schema/auth gezielt kopieren können
-  const skipNames = ['auth.postgresql.ts', 'auth.mongodb.ts', 'schema.postgresql.prisma', 'schema.mongodb.prisma', 'auth.ts', 'schema.prisma'];
+  // Beim rekursiven Kopieren bestimmte Dateien/Varianten überspringen
+  const skipNames = ['auth.postgresql.ts', 'auth.mongodb.ts', 'schema.postgresql.prisma', 'schema.mongodb.prisma', 'auth.ts'];
 
   for (const file of filesToCopy) {
     const srcPath = path.join(templatePath, file);
@@ -91,17 +91,17 @@ function copyTemplates(templatePath, projectPath) {
     }
   }
 
-  // Immer das MongoDB schema.prisma aus der Vorlage kopieren (Quelle: prisma/schema.prisma)
+  // Immer das schema.prisma aus der Vorlage kopieren (Quelle: src/prisma/schema.prisma)
   // Ziel im neuen Projekt: src/prisma/schema.prisma
-  const schemaSrc = path.join(templatePath, 'prisma', 'schema.prisma');
+  const schemaSrc = path.join(templatePath, 'src', 'prisma', 'schema.prisma');
   const schemaDest = path.join(projectPath, 'src', 'prisma', 'schema.prisma');
 
   if (fs.existsSync(schemaSrc)) {
     ensureDir(path.dirname(schemaDest));
     copyFileSync(schemaSrc, schemaDest);
-    console.log('  OK: MongoDB Schema kopiert nach src/prisma/schema.prisma');
+    console.log('  OK: Schema kopiert nach src/prisma/schema.prisma');
   } else {
-    console.warn('  WARN: prisma/schema.prisma in der Vorlage nicht gefunden.');
+    console.warn('  WARN: src/prisma/schema.prisma in der Vorlage nicht gefunden.');
   }
 }
 
