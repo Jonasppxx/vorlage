@@ -1,125 +1,44 @@
 ﻿#!/usr/bin/env node
 'use strict';
 const { execSync } = require('child_process');
-const fs = require('fs');
 const path = require('path');
-const readline = require('readline');
+const { copyTemplates } = require('./lib/copy-templates');
+const { ensureDir, readJsonFile, writeJsonFile } = require('./lib/fs-utils');
 
 const projectName = process.argv[2] || ".";
 const targetDir = path.resolve(process.cwd(), projectName);
 
-function askQuestion(query) {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
-  return new Promise(resolve => rl.question(query, ans => {
-    rl.close();
-    resolve(ans);
-  }));
-}
-
 async function main() {
   console.log('');
-  console.log('Erstelle neues Projekt: ' + projectName);
+  console.log(`Erstelle neues Projekt: ${projectName}`);
   console.log('');
 
   const projectPath = targetDir;
-  
-  if (projectName !== "." && fs.existsSync(projectPath)) {
+
+  if (projectName !== "." && require('fs').existsSync(projectPath)) {
     console.error(`Fehler: Der Ordner "${projectName}" existiert bereits!`);
     process.exit(1);
   }
 
   try {
-    fs.mkdirSync(projectPath, { recursive: true });
+    ensureDir(projectPath);
     console.log('Kopiere Template-Dateien...');
 
     const templatePath = __dirname;
-    const filesToCopy = [
-      'src',
-      'public',
-      'scripts',
-      '.env.example',
-      'package.json',
-      'tsconfig.json',
-      'next.config.ts',
-      'tailwind.config.ts',
-      'postcss.config.mjs',
-      'prisma.config.ts',
-      'eslint.config.mjs',
-      '.gitignore',
-      'README.md',
-      'DATABASE_SETUP.md',
-      'DATABASE_CONFIG.md',
-      'ADMIN_SETUP.md',
-    ];
 
-    function copyRecursive(src, dest) {
-      try {
-        if (fs.statSync(src).isDirectory()) {
-          fs.mkdirSync(dest, { recursive: true });
-          fs.readdirSync(src).forEach(file => {
-            if (
-              file === 'auth.ts' ||
-              file === 'schema.prisma'
-            ) {
-              return;
-            }
-            copyRecursive(path.join(src, file), path.join(dest, file));
-          });
-        } else {
-          fs.copyFileSync(src, dest);
-        }
-      } catch (error) {
-        console.warn('Warnung: ' + error.message);
-      }
-    }
+    // Kopiere alle Templates (inkl. prisma/schema.prisma)
+    copyTemplates(templatePath, projectPath);
 
-    filesToCopy.forEach(file => {
-      const srcPath = path.join(templatePath, file);
-      const destPath = path.join(projectPath, file);
-      
-      if (fs.existsSync(srcPath)) {
-        try {
-          const stat = fs.statSync(srcPath);
-          if (stat.isDirectory()) {
-            console.log('  Kopiere ' + file + '/');
-            copyRecursive(srcPath, destPath);
-          } else {
-            console.log('  Kopiere ' + file);
-            const destDir = path.dirname(destPath);
-            if (!fs.existsSync(destDir)) {
-              fs.mkdirSync(destDir, { recursive: true });
-            }
-            fs.copyFileSync(srcPath, destPath);
-          }
-        } catch (error) {
-          console.warn('  Ueberspringe ' + file + ': ' + error.message);
-        }
-      }
-    });
-
-    console.log('  Kopiere MongoDB Schema...');
-    
-    const schemaTemplatePath = path.join(templatePath, 'prisma');
-    const schemaSrc = path.join(schemaTemplatePath, 'schema.prisma');
-    const schemaDest = path.join(projectPath, 'prisma', 'schema.prisma');
-
-    if (fs.existsSync(schemaSrc)) {
-      fs.mkdirSync(path.join(projectPath, 'prisma'), { recursive: true });
-      fs.copyFileSync(schemaSrc, schemaDest);
-      console.log('  OK: MongoDB Schema kopiert');
-    }
-
+    // package.json anpassen
     const packageJsonPath = path.join(projectPath, 'package.json');
-    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-    packageJson.name = projectName;
-    packageJson.version = '0.1.0';
-    delete packageJson.bin;
-    delete packageJson.files;
-    fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+    const packageJson = readJsonFile(packageJsonPath);
+    if (packageJson) {
+      packageJson.name = projectName;
+      packageJson.version = '0.1.0';
+      delete packageJson.bin;
+      delete packageJson.files;
+      writeJsonFile(packageJsonPath, packageJson);
+    }
 
     console.log('');
     console.log('Installiere Dependencies...');
@@ -132,7 +51,7 @@ async function main() {
     console.log('Projekt erfolgreich erstellt!');
     console.log('');
     console.log('Naechste Schritte:');
-    console.log('  cd ' + projectName);
+    console.log(`  cd ${projectName}`);
     console.log('  npm run dev');
     console.log('');
 
