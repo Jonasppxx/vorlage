@@ -173,6 +173,7 @@ async function main() {
     if (!skipInstall) {
       // Use spawnSync to avoid potential interactive hangups and pass safe flags
       const { spawnSync } = require('child_process');
+      const os = require('os');
       
       // First attempt: Try with optimized flags
       const installArgs = [
@@ -185,9 +186,13 @@ async function main() {
       
       console.log('Führe npm install aus (bitte warten)...\n');
       
-      let res = spawnSync('npm', installArgs, {
+      // On Windows, use shell: true to access npm via PATH
+      // On other systems, shell: false is more efficient
+      const isWindows = process.platform === 'win32';
+      
+      let res = spawnSync(isWindows ? 'npm.cmd' : 'npm', installArgs, {
         stdio: 'inherit',
-        shell: false,
+        shell: isWindows,
         timeout: 5 * 60 * 1000, // 5 Minuten Timeout
         env: { 
           ...process.env, 
@@ -217,9 +222,9 @@ async function main() {
         
         // Second attempt: Rebuild with postinstall scripts enabled
         console.log('Starte postinstall scripts...\n');
-        res = spawnSync('npm', ['run', 'prisma:generate'], {
+        res = spawnSync(isWindows ? 'npm.cmd' : 'npm', ['run', 'prisma:generate'], {
           stdio: 'inherit',
-          shell: false,
+          shell: isWindows,
           timeout: 3 * 60 * 1000,
           env: { ...process.env, npm_config_loglevel: 'warn' }
         });
