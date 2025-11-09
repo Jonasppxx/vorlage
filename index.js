@@ -62,7 +62,6 @@ function copyTemplates(templatePath, projectPath) {
     'next.config.ts',
     'tailwind.config.ts',
     'postcss.config.mjs',
-    'prisma.config.ts',
     'eslint.config.mjs',
     '.gitignore',
     'README.md',
@@ -71,6 +70,10 @@ function copyTemplates(templatePath, projectPath) {
     'ADMIN_SETUP.md',
   ];
 
+  // Dateien/Varianten, die wir beim Kopieren standardmäßig überspringen wollen
+  // (keine generische `auth.ts` mehr - nur DB/provider-spezifische Varianten)
+  const skipNames = ['auth.postgresql.ts', 'auth.mongodb.ts', 'schema.postgresql.prisma', 'schema.mongodb.prisma'];
+
   for (const file of filesToCopy) {
     const srcPath = path.join(templatePath, file);
     const destPath = path.join(projectPath, file);
@@ -78,14 +81,12 @@ function copyTemplates(templatePath, projectPath) {
     try {
       const stat = fs.statSync(srcPath);
       if (stat.isDirectory()) {
-        console.log(`  Kopiere ${file}/`);
         copyRecursive(srcPath, destPath, { skipNames });
       } else {
-        console.log(`  Kopiere ${file}`);
         copyFileSync(srcPath, destPath);
       }
     } catch (err) {
-      console.warn(`  Ueberspringe ${file}: ${err.message}`);
+      // ignore individual copy errors to keep output concise
     }
   }
 
@@ -97,9 +98,8 @@ function copyTemplates(templatePath, projectPath) {
   if (fs.existsSync(schemaSrc)) {
     ensureDir(path.dirname(schemaDest));
     copyFileSync(schemaSrc, schemaDest);
-    console.log('  OK: Schema kopiert nach src/prisma/schema.prisma');
   } else {
-    console.warn('  WARN: src/prisma/schema.prisma in der Vorlage nicht gefunden.');
+    // No warning for missing schema to keep output clean
   }
 }
 
@@ -111,25 +111,24 @@ const projectName = process.argv[2] || ".";
 const targetDir = path.resolve(process.cwd(), projectName);
 
 async function main() {
-  console.log('');
-  console.log(`Erstelle neues Projekt: ${projectName}`);
-  console.log('');
+  console.log(`Erstelle Projekt: ${projectName}`);
 
   const projectPath = targetDir;
 
   if (projectName !== "." && require('fs').existsSync(projectPath)) {
-    console.error(`Fehler: Der Ordner "${projectName}" existiert bereits!`);
+    console.error(`Error: Directory already exists: ${projectName}`);
     process.exit(1);
   }
 
   try {
     ensureDir(projectPath);
-    console.log('Kopiere Template-Dateien...');
+  console.log('Copying templates...');
 
     const templatePath = __dirname;
 
-    // Kopiere alle Templates (inkl. prisma/schema.prisma)s
-    copyTemplates(templatePath, projectPath);
+  // copy templates
+  copyTemplates(templatePath, projectPath);
+  console.log('Templates copied.');
 
     // package.json anpassen
     const packageJsonPath = path.join(projectPath, 'package.json');
@@ -142,9 +141,7 @@ async function main() {
       writeJsonFile(packageJsonPath, packageJson);
     }
 
-    console.log('');
-    console.log('Installiere Dependencies...');
-    console.log('');
+  console.log('Installing dependencies...');
 
     process.chdir(projectPath);
 
@@ -167,7 +164,7 @@ async function main() {
 
       if (fs.existsSync(envPath)) {
         // Merge missing keys from .env.example into existing .env (do not overwrite existing values)
-        console.log('.env existiert — gleiche fehlende Eintraege aus .env.example ab.');
+  console.log('Merging .env.example into .env (if needed)');
         const envContents = fs.readFileSync(envPath, 'utf8');
         const exampleContents = fs.existsSync(examplePath) ? fs.readFileSync(examplePath, 'utf8') : '';
 
@@ -195,9 +192,9 @@ async function main() {
 
         if (changed) {
           fs.writeFileSync(envPath, updated, 'utf8');
-          console.log('Aktualisiert .env: fehlende Keys aus .env.example hinzugefuegt und BETTER_AUTH_SECRET generiert (falls noetig).');
+          console.log('.env updated');
         } else {
-          console.log('.env bereits komplett — keine Aenderungen notwendig.');
+          console.log('.env already complete');
         }
       } else {
         // Create new .env using .env.example as base and add BETTER_AUTH_SECRET
@@ -217,18 +214,17 @@ async function main() {
           contents += `${secretLine}\n`;
         }
 
-        fs.writeFileSync(envPath, contents, 'utf8');
-        console.log('Erstellt .env mit Inhalten aus .env.example und generiertem BETTER_AUTH_SECRET.');
+  fs.writeFileSync(envPath, contents, 'utf8');
+  console.log('.env created');
       }
     } catch (err) {
-      console.warn('Konnte .env nicht automatisch anlegen/aktualisieren:', err && err.message ? err.message : err);
+      console.warn('Could not create/update .env:', err && err.message ? err.message : err);
     }
 
     // Try to run Prisma generate/db push first. If Prisma CLI (npx) isn't available
     // because dependencies haven't been installed, run `npm install` and retry.
     try {
-      console.log('');
-      console.log('Versuche Prisma Client zu generieren und das Schema anzuwenden...');
+  console.log('Running Prisma generate & db push...');
 
       const schemaPath = path.join('src', 'prisma', 'schema.prisma');
 
@@ -244,25 +240,33 @@ async function main() {
       try {
         runPrismaCommands();
       } catch (prismaErr) {
-        console.log('Prisma-CLI oder Abhaengigkeiten evtl. nicht vorhanden. Installiere Abhaengigkeiten und erneut versuchen...');
+  console.log('Prisma failed; running npm install and retrying...');
         execSync('npm install', { stdio: 'inherit' });
         // retry
         try {
           runPrismaCommands();
         } catch (prismaErr2) {
-          console.warn('Prisma-Befehle schlugen nach der Installation weiterhin fehl:', prismaErr2 && prismaErr2.message ? prismaErr2.message : prismaErr2);
+          console.warn('Prisma commands failed after retry.');
         }
       }
 
       // Start dev server in background (detached) so we can continue and run the admin script.
       try {
-        console.log('Starte dev-Server (npm run dev) im Hintergrund...');
-        const dev = spawn('npm', ['run', 'dev'], { stdio: 'ignore', shell: true, detached: true });
-        dev.unref();
+        console.log('Starting dev server (background)...');
+        let dev;
+        if (process.platform === 'win32') {
+          // On Windows use `start` to spawn an independent window/process that won't die with this script
+          // start requires a title argument, provide empty title "" before the command
+          dev = spawn('cmd', ['/c', 'start', '""', 'npm', 'run', 'dev'], { stdio: 'ignore', detached: true });
+        } else {
+          // POSIX: spawn detached child
+          dev = spawn('npm', ['run', 'dev'], { stdio: 'ignore', detached: true });
+        }
+        if (dev && typeof dev.unref === 'function') dev.unref();
         // give the server a moment to boot so HTTP endpoints may be reachable
         await new Promise((resolve) => setTimeout(resolve, 2500));
       } catch (devErr) {
-        console.warn('Fehler beim Starten von npm run dev (im Hintergrund):', devErr && devErr.message ? devErr.message : devErr);
+        console.warn('Failed to start dev server:', devErr && devErr.message ? devErr.message : devErr);
       }
 
       // Prompt for admin credentials and run create-admin-via-api.js in the newly created project
@@ -271,8 +275,7 @@ async function main() {
 
       const ask = (q) => new Promise((resolve) => rl.question(q, resolve));
 
-      console.log('');
-      console.log('Optional: Erstelle sofort einen Admin-Benutzer via scripts/create-admin-via-api.js');
+  console.log('Optional: create admin user (via scripts/create-admin-via-api.js)');
       const email = (await ask('Admin E-Mail (leer = überspringen): ')).trim();
       if (!email) {
         rl.close();
@@ -285,35 +288,35 @@ async function main() {
 
         const scriptPath = path.join(projectPath, 'scripts', 'create-admin-via-api.js');
         if (!fs.existsSync(scriptPath)) {
-          console.warn(`Skript nicht gefunden: ${scriptPath} — überspringe Admin-Erstellung.`);
+          console.warn('Admin script not found, skipping.');
         } else {
-          console.log('Starte create-admin-via-api.js mit den angegebenen Parametern...');
+          console.log('Running admin script...');
           // Use spawnSync to avoid shell quoting issues and inherit stdio
           const args = [scriptPath, email, password, name || '', baseUrl];
           const node = process.execPath; // path to node binary
           const res = spawnSync(node, args, { stdio: 'inherit' });
           if (res.error) {
-            console.error('Fehler beim Starten des Admin-Skripts:', res.error.message || res.error);
+            console.error('Error running admin script:', res.error.message || res.error);
           } else if (res.status !== 0) {
-            console.warn('create-admin-via-api.js beendete mit Exit-Code', res.status);
+            console.warn('Admin script exited with code', res.status);
           } else {
-            console.log('Admin-Skript erfolgreich ausgefuehrt.');
+            console.log('Admin script finished.');
           }
         }
       }
     } catch (err) {
-      console.warn('Prisma-Schritte u/o Admin-Erstellung schlugen fehl:', err && err.message ? err.message : err);
+      console.warn('Prisma/admin steps failed:', err && err.message ? err.message : err);
     }
 
-    console.log('');
-    console.log('Projekt erfolgreich erstellt!');
+    console.log('Project created.');
+    console.log(`Next: cd ${projectName} && npm run dev`);
   } catch (error) {
-    console.error('Fehler: ' + error.message);
+    console.error('Error:', error && error.message ? error.message : error);
     process.exit(1);
   }
 }
 
 main().catch(error => {
-  console.error('Fehler: ' + error.message);
+  console.error('Error:', error && error.message ? error.message : error);
   process.exit(1);
 });
