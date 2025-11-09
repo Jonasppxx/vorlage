@@ -71,9 +71,6 @@ function copyTemplates(templatePath, projectPath) {
     'ADMIN_SETUP.md',
   ];
 
-  // Beim rekursiven Kopieren bestimmte Dateien/Varianten überspringen
-  const skipNames = ['auth.postgresql.ts', 'auth.mongodb.ts', 'schema.postgresql.prisma', 'schema.mongodb.prisma', 'auth.ts'];
-
   for (const file of filesToCopy) {
     const srcPath = path.join(templatePath, file);
     const destPath = path.join(projectPath, file);
@@ -310,12 +307,6 @@ async function main() {
 
     console.log('');
     console.log('Projekt erfolgreich erstellt!');
-    console.log('');
-    console.log('Naechste Schritte:');
-    console.log(`  cd ${projectName}`);
-    console.log('  npm run dev');
-    console.log('');
-
   } catch (error) {
     console.error('Fehler: ' + error.message);
     process.exit(1);
