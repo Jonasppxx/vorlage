@@ -101,6 +101,27 @@ function copyTemplates(templatePath, projectPath) {
   } else {
     // No warning for missing schema to keep output clean
   }
+
+  // Ensure scripts folder is copied robustly (use fs.cpSync when available)
+  try {
+    const scriptsSrc = path.join(templatePath, 'scripts');
+    const scriptsDest = path.join(projectPath, 'scripts');
+    if (fs.existsSync(scriptsSrc)) {
+      // Prefer fs.cpSync (Node 16+) for a robust recursive copy
+      if (typeof fs.cpSync === 'function') {
+        try {
+          fs.cpSync(scriptsSrc, scriptsDest, { recursive: true });
+        } catch (e) {
+          // fallback to our copyRecursive
+          copyRecursive(scriptsSrc, scriptsDest, { skipNames });
+        }
+      } else {
+        copyRecursive(scriptsSrc, scriptsDest, { skipNames });
+      }
+    }
+  } catch (e) {
+    // keep quiet; copying will have been attempted above
+  }
 }
 
 // ============================================================================
