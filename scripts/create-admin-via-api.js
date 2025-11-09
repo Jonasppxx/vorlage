@@ -82,7 +82,7 @@ async function main() {
               email: accountId,
               emailVerified: true,
               role: 'admin',
-              accounts: { create: { providerId: 'credentials', accountId, password: hashed } },
+              accounts: { create: { providerId: 'credential', accountId, password: hashed } },
             },
           });
           console.log(`Created admin user in DB: ${user.email}`);
@@ -92,13 +92,13 @@ async function main() {
             console.log(`Updated user role to admin for ${user.email}`);
           }
 
-          const existingAccount = await prisma.account.findFirst({ where: { providerId: 'credentials', accountId } });
+          const existingAccount = await prisma.account.findFirst({ where: { providerId: 'credential', accountId } });
           if (existingAccount) {
             await prisma.account.update({ where: { id: existingAccount.id }, data: { password: hashed } });
-            console.log('Updated existing credentials account password in DB.');
+            console.log('Updated existing credential account password in DB.');
           } else {
-            await prisma.account.create({ data: { providerId: 'credentials', accountId, password: hashed, user: { connect: { id: user.id } } } });
-            console.log('Created credentials account for user in DB.');
+            await prisma.account.create({ data: { providerId: 'credential', accountId, password: hashed, user: { connect: { id: user.id } } } });
+            console.log('Created credential account for user in DB.');
           }
         }
 
@@ -130,7 +130,7 @@ async function main() {
           email: accountId,
           emailVerified: true,
           role: 'admin',
-          accounts: { create: { providerId: 'credentials', accountId, password: hashed } },
+          accounts: { create: { providerId: 'credential', accountId, password: hashed } },
         },
       });
       console.log(`Created admin user in DB: ${user.email}`);
@@ -140,13 +140,13 @@ async function main() {
         console.log(`Updated user role to admin for ${user.email}`);
       }
 
-      const existingAccount = await prisma.account.findFirst({ where: { providerId: 'credentials', accountId } });
+      const existingAccount = await prisma.account.findFirst({ where: { providerId: 'credential', accountId } });
       if (existingAccount) {
         await prisma.account.update({ where: { id: existingAccount.id }, data: { password: hashed } });
-        console.log('Updated existing credentials account password in DB.');
+        console.log('Updated existing credential account password in DB.');
       } else {
-        await prisma.account.create({ data: { providerId: 'credentials', accountId, password: hashed, user: { connect: { id: user.id } } } });
-        console.log('Created credentials account for user in DB.');
+        await prisma.account.create({ data: { providerId: 'credential', accountId, password: hashed, user: { connect: { id: user.id } } } });
+        console.log('Created credential account for user in DB.');
       }
     }
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 'use strict';
-const { execSync } = require('child_process');
+const { execSync, spawnSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
@@ -150,6 +150,64 @@ async function main() {
 
     process.chdir(projectPath);
     execSync('npm install', { stdio: 'inherit' });
+
+    // After installing dependencies, run Prisma generate and db push (if prisma schema exists)
+    try {
+      console.log('');
+      console.log('Generiere Prisma Client und wende Schema an...');
+      // generate client
+      execSync('npx prisma generate', { stdio: 'inherit' });
+      // push schema (explicit schema path inside project)
+      const schemaPath = path.join('src', 'prisma', 'schema.prisma');
+      if (fs.existsSync(schemaPath)) {
+        execSync(`npx prisma db push --schema=${schemaPath}`, { stdio: 'inherit' });
+      } else {
+        // try without explicit schema if default setup
+        execSync('npx prisma db push', { stdio: 'inherit' });
+      }
+
+      // Prompt for admin credentials and run create-admin-via-api.js in the newly created project
+      const readline = require('readline');
+      const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+
+      const ask = (q) => new Promise((resolve) => rl.question(q, resolve));
+
+      (async () => {
+        console.log('');
+        console.log('Optional: Erstelle sofort einen Admin-Benutzer via scripts/create-admin-via-api.js');
+        const email = (await ask('Admin E-Mail (leer = überspringen): ')).trim();
+        if (!email) {
+          rl.close();
+          return;
+        }
+        const password = (await ask('Admin Passwort: ')).trim();
+        const name = (await ask('Admin Name (optional): ')).trim();
+        const baseUrlInput = (await ask('Base URL of running app (optional, default http://localhost:3000): ')).trim();
+        const baseUrl = baseUrlInput || 'http://localhost:3000';
+        rl.close();
+
+        const scriptPath = path.join(projectPath, 'scripts', 'create-admin-via-api.js');
+        if (!fs.existsSync(scriptPath)) {
+          console.warn(`Skript nicht gefunden: ${scriptPath} — überspringe Admin-Erstellung.`);
+          return;
+        }
+
+        console.log('Starte create-admin-via-api.js mit den angegebenen Parametern...');
+        // Use spawnSync to avoid shell quoting issues and inherit stdio
+        const args = [scriptPath, email, password, name || '', baseUrl];
+        const node = process.execPath; // path to node binary
+        const res = spawnSync(node, args, { stdio: 'inherit' });
+        if (res.error) {
+          console.error('Fehler beim Starten des Admin-Skripts:', res.error.message || res.error);
+        } else if (res.status !== 0) {
+          console.warn('create-admin-via-api.js beendete mit Exit-Code', res.status);
+        } else {
+          console.log('Admin-Skript erfolgreich ausgefuehrt.');
+        }
+      })();
+    } catch (err) {
+      console.warn('Prisma-Schritte u/o Admin-Erstellung schlugen fehl:', err && err.message ? err.message : err);
+    }
 
     console.log('');
     console.log('Projekt erfolgreich erstellt!');
