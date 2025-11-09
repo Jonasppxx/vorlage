@@ -1,5 +1,4 @@
 import { prisma } from '@/src/lib/prisma/prisma';
-import AuthForm from '@/src/components/auth/AuthForm';
 import UserSession from '@/src/components/auth/UserSession';
 import Link from 'next/link';
 
@@ -18,13 +17,18 @@ export default async function Home() {
   const dbStatus = await getDbStatus();
 
   return (
-    <div className="min-h-screen bg-zinc-50 font-sans dark:bg-black py-12 px-4">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-zinc-50 font-sans dark:bg-black">
+      <div className="max-w-6xl mx-auto px-4 py-12">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">Next.js Template with Subscriptions</h1>
           <p className="text-lg text-gray-600 dark:text-gray-400 mb-2">
             MongoDB Replica Set + Better-Auth + Stripe Subscriptions
           </p>
+        </div>
+
+        {/* User Session Card */}
+        <div className="mb-8">
+          <UserSession />
         </div>
 
         {/* Quick Links Section */}
@@ -82,20 +86,6 @@ export default async function Home() {
                 Produkte
               </Link>
             </div>
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-8 mb-8">
-          {/* Authentication Section */}
-          <div>
-            <h2 className="text-2xl font-semibold mb-4 text-center">Authentication</h2>
-            <AuthForm />
-          </div>
-
-          {/* Session Display */}
-          <div>
-            <h2 className="text-2xl font-semibold mb-4 text-center">Session Status</h2>
-            <UserSession />
           </div>
         </div>
 
