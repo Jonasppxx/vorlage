@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Stripe from 'stripe';
+import { getStripe } from '@/src/lib/stripe';
 import { prisma } from '@/src/lib/prisma/prisma';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-08-27.basil',
-});
+import Stripe from 'stripe';
 
 export async function POST(req: NextRequest) {
   try {
@@ -68,6 +65,7 @@ export async function POST(req: NextRequest) {
       select: { stripeCustomerId: true },
     });
 
+    const stripe = getStripe();
     if (existingCustomer) {
       stripeCustomerId = existingCustomer.stripeCustomerId;
     } else {

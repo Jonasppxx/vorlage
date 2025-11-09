@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma/prisma';
+import { getStripe } from '@/src/lib/stripe';
 import Stripe from 'stripe';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-08-27.basil',
-});
 
 // GET /api/admin/coupons - List all coupons
 export async function GET(request: NextRequest) {
@@ -90,6 +87,7 @@ export async function POST(request: NextRequest) {
       stripeCouponData.redeem_by = Math.floor(new Date(expiresAt).getTime() / 1000);
     }
 
+    const stripe = getStripe();
     const stripeCoupon = await stripe.coupons.create(stripeCouponData);
 
     // Save to database

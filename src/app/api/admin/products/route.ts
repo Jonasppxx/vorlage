@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma/prisma';
+import { getStripe } from '@/src/lib/stripe';
 import Stripe from 'stripe';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-08-27.basil',
-});
 
 // GET /api/admin/products - List all products (admin only)
 export async function GET(request: NextRequest) {
@@ -53,6 +50,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create product in Stripe
+    const stripe = getStripe();
     const stripeProduct = await stripe.products.create({
       name,
       description: description || undefined,

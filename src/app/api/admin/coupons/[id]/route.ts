@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma/prisma';
-import Stripe from 'stripe';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-08-27.basil',
-});
+import { getStripe } from '@/src/lib/stripe';
 
 // GET /api/admin/coupons/[id] - Get single coupon
 export async function GET(
@@ -87,6 +83,7 @@ export async function DELETE(
     // Delete from Stripe
     if (coupon.stripeCouponId) {
       try {
+        const stripe = getStripe();
         await stripe.coupons.del(coupon.stripeCouponId);
       } catch (stripeError) {
         console.error('Error deleting Stripe coupon:', stripeError);

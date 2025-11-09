@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma/prisma';
+import { getStripe } from '@/src/lib/stripe';
 import Stripe from 'stripe';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-08-27.basil',
-});
 
 // GET /api/admin/products/[id] - Get single product
 export async function GET(
@@ -52,6 +49,7 @@ export async function PATCH(
     }
 
     // Update Stripe product if name or description changed
+    const stripe = getStripe();
     if (existingProduct.stripeProductId && (name || description)) {
       await stripe.products.update(existingProduct.stripeProductId, {
         name: name || undefined,
@@ -130,6 +128,7 @@ export async function DELETE(
     // Archive product in Stripe (don't delete, just deactivate)
     if (product.stripeProductId) {
       try {
+        const stripe = getStripe();
         await stripe.products.update(product.stripeProductId, {
           active: false,
         });
