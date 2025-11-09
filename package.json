@@ -41,7 +41,10 @@
     ".gitignore",
     ".gitattributes",
     "README.md",
-    ".env.example"
+    ".env.example",
+    "deployment",
+    "upload-env-secrets.ps1",
+    "upload-env-secrets.sh"
   ],
   "bin": {
     "nexal": "./index.js"

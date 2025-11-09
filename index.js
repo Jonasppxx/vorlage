@@ -52,27 +52,31 @@ function copyRecursive(src, dest, options = {}) {
 }
 
 function copyTemplates(templatePath, projectPath) {
+  // Keep this list in sync with package.json -> files
+  // Base template files to copy into the new project
   const filesToCopy = [
     'src',
     'public',
-    'scripts',
-    '.env.example',
+    'index.js',
     'package.json',
+    'scripts',
+    'docker-compose.yml',
+    'Dockerfile',
+    '.env.example',
+    '.gitignore',
+    '.gitattributes',
+    'README.md',
+    // common config files (keep in sync with package.json files/globs)
     'tsconfig.json',
     'next.config.ts',
     'tailwind.config.ts',
     'postcss.config.mjs',
     'eslint.config.mjs',
-    '.gitignore',
-    'README.md',
-    'DATABASE_SETUP.md',
-    'DATABASE_CONFIG.md',
-    'ADMIN_SETUP.md',
-    'docker-compose.yml',
-    'Dockerfile',
+    // Additional deployment helpers (not part of published package 'files')
     'upload-env-secrets.ps1',
     'upload-env-secrets.sh',
-    'deployment/deploy.yml',
+    'deployment',
+    '.github',
   ];
 
   // Dateien/Varianten, die wir beim Kopieren standardmäßig überspringen wollen
