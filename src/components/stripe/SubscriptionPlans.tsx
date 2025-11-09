@@ -1,0 +1,183 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useSession } from '@/src/lib/auth-client';
+import { loadStripe } from '@stripe/stripe-js';
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+
+interface Product {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  currency: string;
+  billingInterval: string;
+  trialPeriodDays: number | null;
+  active: boolean;
+}
+
+interface SubscriptionPlansProps {
+  onSubscribeStart?: () => void;
+  onSubscribeError?: (error: string) => void;
+}
+
+export default function SubscriptionPlans({ onSubscribeStart, onSubscribeError }: SubscriptionPlansProps) {
+  const { data: session } = useSession();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [couponCode, setCouponCode] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const res = await fetch('/api/products');
+      const data = await res.json();
+      const activeProducts = (data.products || []).filter(
+        (p: Product) => p.active
+      );
+      setProducts(activeProducts);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubscribe = async (productId: string, appliedCoupon?: string) => {
+    if (!session?.user?.id) {
+      onSubscribeError?.('Please log in to subscribe');
+      return;
+    }
+
+    try {
+      onSubscribeStart?.();
+      
+      const stripe = await stripePromise;
+      if (!stripe) {
+        onSubscribeError?.('Stripe not loaded');
+        return;
+      }
+
+      const res = await fetch('/api/stripe/create-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId,
+          userId: session.user.id,
+          couponCode: appliedCoupon || undefined,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.error) {
+        onSubscribeError?.(data.error);
+        return;
+      }
+
+      const result = await stripe.redirectToCheckout({
+        sessionId: data.sessionId,
+      });
+
+      if (result.error) {
+        onSubscribeError?.(result.error.message || 'Checkout failed');
+      }
+    } catch (error) {
+      console.error('Error creating subscription:', error);
+      onSubscribeError?.('Failed to create subscription');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-gray-400">Loading subscription plans...</p>
+      </div>
+    );
+  }
+
+  if (products.length === 0) {
+    return (
+      <div className="bg-gray-800 rounded-lg p-8 text-center">
+        <p className="text-gray-400">No subscription plans available at the moment.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {products.map((product) => (
+        <div
+          key={product.id}
+          className="bg-gray-800 rounded-lg p-8 border-2 border-gray-700 hover:border-blue-600 transition-colors"
+        >
+          <h2 className="text-2xl font-bold text-white mb-4">{product.name}</h2>
+          
+          {product.trialPeriodDays && product.trialPeriodDays > 0 && (
+            <div className="mb-4 px-3 py-1 bg-green-600/20 border border-green-600 rounded-full text-green-400 text-sm text-center">
+              🎁 {product.trialPeriodDays} days free trial
+            </div>
+          )}
+          
+          <div className="mb-6">
+            <span className="text-4xl font-bold text-white">
+              {product.price.toFixed(2)}
+            </span>
+            <span className="text-gray-400 ml-2">
+              {product.currency.toUpperCase()} / {product.billingInterval === 'year' ? 'year' : 'month'}
+            </span>
+          </div>
+
+          {product.description && (
+            <p className="text-gray-300 mb-6">{product.description}</p>
+          )}
+
+          {selectedProduct === product.id ? (
+            <div className="mb-4">
+              <label className="block text-sm text-gray-400 mb-2">
+                Have a coupon code?
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  placeholder="COUPON CODE"
+                  className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-500 uppercase"
+                />
+                <button
+                  onClick={() => {
+                    setSelectedProduct(null);
+                    setCouponCode('');
+                  }}
+                  className="px-3 py-2 bg-gray-700 text-gray-400 rounded hover:bg-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setSelectedProduct(product.id)}
+              className="w-full mb-3 text-sm text-blue-400 hover:text-blue-300"
+            >
+              + Add coupon code
+            </button>
+          )}
+
+          <button
+            onClick={() => handleSubscribe(product.id, selectedProduct === product.id ? couponCode : undefined)}
+            className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold transition-colors"
+          >
+            Subscribe Now
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
