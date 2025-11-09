@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "next dev",
-    "prisma:prepare": "prisma generate --schema src/prisma/schema.prisma && prisma db push --schema src/prisma/schema.prisma",
-    "build": "prisma generate --schema src/prisma/schema.prisma && next build",
+    "prisma:prepare": "prisma generate && prisma db push",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "init:admin": "node scripts/init-admin.js",
