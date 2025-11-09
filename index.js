@@ -327,12 +327,11 @@ async function main() {
       const schemaPath = path.join('src', 'prisma', 'schema.prisma');
 
       function runPrismaCommands() {
+        // Always run prisma generate and prisma db push without passing a
+        // specific schema path. Rely on Prisma's default discovery of
+        // schema.prisma in the project (or the CLI's defaults).
         execSync('npx prisma generate', { stdio: 'inherit' });
-        if (fs.existsSync(schemaPath)) {
-          execSync(`npx prisma db push --schema=${schemaPath}`, { stdio: 'inherit' });
-        } else {
-          execSync('npx prisma db push', { stdio: 'inherit' });
-        }
+        execSync('npx prisma db push', { stdio: 'inherit' });
       }
 
       try {

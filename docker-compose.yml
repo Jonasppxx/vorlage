@@ -1,14 +1,60 @@
-version: '3.8'
-
 services:
   mongodb:
     image: mongo:7.0
     container_name: mongodb
     restart: always
     command:
-      - bash
-      - -lc
-      - "if [ ! -f /data/keyfile ]; then head -c 756 /dev/urandom | base64 > /data/keyfile; chmod 600 /data/keyfile; fi; exec mongod --replSet rs0 --bind_ip_all --keyFile /data/keyfile"
+      - /bin/bash
+      - -c
+      - |
+        set -e
+        mongod --replSet rs0 --bind_ip_all &
+        MONGO_PID=$!
+        sleep 2
+        # Wait for MongoDB to start
+        for i in {1..30}; do
+          if mongosh --quiet --eval "db.adminCommand('ping')" mongodb://localhost:27017/admin >/dev/null 2>&1; then
+            echo "✓ MongoDB is running"
+            break
+          fi
+          sleep 1
+        done
+        # Create admin user
+        mongosh --quiet --eval "
+          try {
+            db.getSiblingDB('admin').createUser({
+              user: 'admin',
+              pwd: 'admin123',
+              roles: [{role: 'root', db: 'admin'}]
+            });
+            console.log('✓ Admin user created');
+          } catch(e) {
+            if (e.code === 48) {
+              console.log('✓ Admin user already exists');
+            } else {
+              console.log('Error creating admin user:', e.message);
+            }
+          }
+        " mongodb://localhost:27017/admin
+        # Initialize replica set
+        mongosh --quiet --eval "
+          try {
+            if (rs.status().ok !== 1) {
+              rs.initiate({
+                _id: 'rs0',
+                members: [
+                  { _id: 0, host: 'localhost:27017' }
+                ]
+              });
+              console.log('✓ Replica set initialized');
+            } else {
+              console.log('✓ Replica set already exists');
+            }
+          } catch(e) {
+            console.log('Error initializing replica set:', e.message);
+          }
+        " mongodb://admin:admin123@localhost:27017/admin
+        wait $MONGO_PID
     ports:
       - "27017:27017"
     environment:
@@ -17,12 +63,8 @@ services:
       MONGO_INITDB_DATABASE: vorlage
     volumes:
       - mongodb_data:/data/db
-    healthcheck:
-      test: ["CMD-SHELL", "mongosh --quiet --eval 'rs.status().ok || rs.initiate({_id:\"rs0\", members:[{_id:0, host:\"localhost:27017\"}]})' mongodb://admin:admin123@localhost:27017/admin"]
-      interval: 10s
-      timeout: 10s
-      retries: 6
-      start_period: 20s
+    networks:
+      - vorlage-network
 
   app:
     build:
@@ -38,8 +80,7 @@ services:
       BETTER_AUTH_URL: http://localhost:3000
       NEXT_PUBLIC_APP_URL: http://localhost:3000
     depends_on:
-      mongodb:
-        condition: service_healthy
+      - mongodb
     networks:
       - vorlage-network
     volumes:
