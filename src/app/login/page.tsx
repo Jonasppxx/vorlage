@@ -20,17 +20,34 @@ export default function LoginPage() {
 
     try {
       if (activeTab === "signup") {
-        await signUp.email({
+        const res: any = await signUp.email({
           email,
           password,
           name,
         });
+
+        // better-auth client may return a result object instead of throwing.
+        if (res && (res.error || res.ok === false)) {
+          const message = (res.error && (res.error.message || res.error)) || 'Registration failed';
+          setError(typeof message === 'string' ? message : JSON.stringify(message));
+          setLoading(false);
+          return;
+        }
+
         router.push("/");
       } else {
-        await signIn.email({
+        const res: any = await signIn.email({
           email,
           password,
         });
+
+        if (res && (res.error || res.ok === false)) {
+          const message = (res.error && (res.error.message || res.error)) || 'Authentication failed';
+          setError(typeof message === 'string' ? message : JSON.stringify(message));
+          setLoading(false);
+          return;
+        }
+
         router.push("/");
       }
     } catch (err) {
