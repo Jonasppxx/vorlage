@@ -210,7 +210,7 @@ async function main() {
           if (res.status === 0) {
             // give container time to initialize
             await new Promise((r) => setTimeout(r, 3000));
-            dbUrl = 'mongodb://admin:admin123@localhost:27017/vorlage?authSource=admin';
+            dbUrl = 'mongodb://admin:admin123@localhost:27017/vorlage?authSource=admin&replicaSet=rs0';
           } else {
             console.warn('Could not start mongodb via docker-compose. You can provide a DATABASE_URL manually later.');
           }

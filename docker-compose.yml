@@ -5,6 +5,17 @@ services:
     image: mongo:7.0
     container_name: mongodb
     restart: always
+    command:
+      - bash
+      - -lc
+      - |
+        if [ ! -f /data/keyfile ]; then head -c 756 /dev/urandom | base64 > /data/keyfile; chmod 600 /data/keyfile; fi
+        mongod --replSet rs0 --bind_ip_all --keyFile /data/keyfile --fork --logpath /var/log/mongod.log
+        for i in $(seq 1 60); do
+          mongosh --quiet mongodb://admin:admin123@localhost:27017/admin --eval "db.adminCommand('ping')" >/dev/null 2>&1 && break || sleep 1
+        done
+        mongosh --quiet mongodb://admin:admin123@localhost:27017/admin --eval "try{ if(rs.status().ok!==1) rs.initiate({_id:'rs0', members:[{_id:0, host:'localhost:27017'}]}); }catch(e){}" || true
+        tail -n +1 -f /var/log/mongod.log
     ports:
       - "27017:27017"
     environment:
@@ -13,6 +24,16 @@ services:
       MONGO_INITDB_DATABASE: vorlage
     volumes:
       - mongodb_data:/data/db
+      # note: keyfile is generated inside the container at /data/keyfile
+    healthcheck:
+      # Use a shell healthcheck that will attempt to initiate a single-node replica set
+      # if it's not yet initiated. This avoids having an init file in the repo.
+      # run initiation against localhost (we're running inside the container)
+      test: ["CMD-SHELL", "mongosh --quiet --eval \"try{ if(rs.status().ok!==1) rs.initiate({_id:'rs0', members:[{_id:0, host:'localhost:27017'}]}); }catch(e){}; rs.status()\" mongodb://admin:admin123@localhost:27017/admin"]
+      interval: 10s
+      timeout: 20s
+      retries: 6
+      start_period: 30s
 
   app:
     build:
@@ -23,7 +44,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: mongodb://admin:admin123@mongodb:27017/vorlage?authSource=admin
+      DATABASE_URL: mongodb://admin:admin123@mongodb:27017/vorlage?authSource=admin&replicaSet=rs0
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-your-secret-key-change-in-production}
       BETTER_AUTH_URL: http://localhost:3000
       NEXT_PUBLIC_APP_URL: http://localhost:3000
